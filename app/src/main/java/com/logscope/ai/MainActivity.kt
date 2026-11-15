@@ -183,10 +183,10 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
                     val parsed = ArrayList<LogEntity>()
-                    var line: String?
                     var count = 0
-                    while (count < 100000 && reader.readLine().also { line = it } != null) {
-                        LogParser.parse(line!!)?.let { parsed.add(it) }
+                    while (count < 100000) {
+                        val line = reader.readLine() ?: break
+                        LogParser.parse(line)?.let { parsed.add(it) }
                         count++
                     }
                     if (parsed.isNotEmpty()) { db.logs().insertAll(parsed); db.logs().trim() }
