@@ -29,16 +29,39 @@ object LogParser {
         return LogEntity(timestamp = millis, level = level, pid = m.group(2), tid = m.group(3), tag = tag, message = message, raw = raw, category = category)
     }
     private fun classify(tag: String, message: String): String {
-        val s = "$tag $message".lowercase(Locale.ROOT)
+        val t = tag.lowercase(Locale.ROOT)
+        val s = "$t ${message.lowercase(Locale.ROOT)}"
+        // 1) Severe signatures always win, whatever the tag is.
+        if ("fatal exception" in s || "fatal signal" in s || "process has died" in s) return "CRASH"
+        if ("not responding" in s || "am_anr" in s || "anr in " in s) return "ANR"
+        if ("outofmemory" in s || "low memory" in s || "lowmemorykiller" in s || t == "am_low_memory") return "MEMORY"
+        if ("permission denial" in s || "securityexception" in s || "permission denied" in s || ("avc" in s && "denied" in s)) return "PERMISSION"
+        // 2) Known tags.
+        tagCategory(t)?.let { return it }
+        // 3) Message keywords as a fallback.
         return when {
-            "fatal exception" in s || "fatal signal" in s || "process has died" in s -> "CRASH"
-            "not responding" in s || "am_anr" in s || "anr in " in s -> "ANR"
             "connectivity" in s || "dns" in s || "socket" in s || "ssl" in s || "network" in s -> "NETWORK"
             "battery" in s || "power" in s || "thermal" in s -> "POWER"
-            "permission denial" in s || "securityexception" in s || "denied" in s -> "PERMISSION"
-            "outofmemory" in s || "low memory" in s -> "MEMORY"
             else -> "SYSTEM"
         }
+    }
+
+    private fun tagCategory(t: String): String? = when {
+        t.contains("inputmethod") || t.contains("inputdispatcher") || t.contains("inputreader") || t == "input_focus" -> "INPUT"
+        t.contains("windowmanager") || t == "transition" || t.contains("insetssource") || t.contains("surfaceflinger") ||
+            t.contains("displaymanager") || t.contains("sysui") || t.contains("edgelighting") -> "DISPLAY"
+        t.contains("notification") -> "NOTIFICATION"
+        t.contains("rilj") || t.contains("rild") || t == "telecom" || t.startsWith("uiccslot") || t == "sst" ||
+            t.contains("networktypecontroller") || t.contains("localetracker") || t.contains("telephony") || t.contains("imsphone") -> "TELEPHONY"
+        t.contains("connectivity") || t.contains("netd") || t.contains("wifi") || t.contains("wpa_supplicant") ||
+            t.contains("dnsresolver") || t.startsWith("dn-") || t.startsWith("dnc") || t.startsWith("nrm-c") || t.contains("netpolicy") -> "NETWORK"
+        t.contains("powermanager") || t.contains("power_partial_wake") || t.contains("battery") || t.contains("thermal") ||
+            t.contains("argos") || t.contains("freecess") -> "POWER"
+        t.contains("knox") || t.contains("restrictionpolicy") || t.contains("selinux") || t.contains("keystore") -> "SECURITY"
+        t.contains("activitymanager") || t.contains("activitytask") || t.startsWith("am_") || t.startsWith("wm_") -> "ACTIVITY"
+        t.startsWith("jank_") || t.startsWith("io_stats") || t.contains("kernelcpu") || t.contains("systemservertiming") ||
+            t.contains("choreographer") || t == "sgm" -> "PERFORMANCE"
+        else -> null
     }
 }
 
