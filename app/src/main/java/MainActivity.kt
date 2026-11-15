@@ -160,7 +160,7 @@ class MainActivity : ComponentActivity() {
         stopPolling()
         pollingJob = lifecycleScope.launch {
             while (true) {
-                val rows = try { withContext(Dispatchers.IO) { api.readAvailable(250).toList() } } catch (e: Exception) {
+                val rows = try { withContext(Dispatchers.IO) { api.readAvailable(10000).toList() } } catch (e: Exception) {
                     connectionText.value = "Log stream interrupted: ${e.message}"; emptyList()
                 }
                 if (rows.isNotEmpty()) {
