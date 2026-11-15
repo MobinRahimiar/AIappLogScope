@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
     private var bound = false
     private val args by lazy {
         Shizuku.UserServiceArgs(ComponentName(this, LogReaderUserService::class.java))
-            .daemon(false).tag("LogScopeAI.LogReader").version(2)
+          .daemon(false).processNameSuffix("logreader").tag("LogScopeAI.LogReader").version(2)
     }
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
