@@ -206,7 +206,7 @@ class MainActivity : ComponentActivity() {
                     "  {\"timestamp\":${e.timestamp},\"level\":\"${jsonEscape(e.level)}\",\"pid\":\"${jsonEscape(e.pid)}\",\"tid\":\"${jsonEscape(e.tid)}\",\"tag\":\"${jsonEscape(e.tag)}\",\"category\":\"${jsonEscape(e.category)}\",\"message\":\"${jsonEscape(e.message)}\"}"
                 }
                 "csv" -> "timestamp,level,pid,tid,tag,category,message\n" + rows.joinToString("\n") { e -> listOf(e.timestamp.toString(),e.level,e.pid,e.tid,e.tag,e.category,e.message).joinToString(",") { csvEscape(it) } }
-                else -> rows.joinToString("\n") { e -> "${Date(e.timestamp)} ${e.level}/${e.tag} (${e.pid}:${e.tid}) [${e.category}] ${e.message}" }
+                else -> rows.joinToString("\n") { e -> "${SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(e.timestamp))} ${e.level} ${e.level}/${e.tag} (${e.pid}:${e.tid}) [${e.category}] ${e.message}" }
             }
             runCatching { contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(text) } }
         }
